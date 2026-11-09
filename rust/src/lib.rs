@@ -6,3 +6,4 @@ pub mod key;
 pub mod paths;
 pub mod savefile;
 pub mod tables;
+pub mod ui;
