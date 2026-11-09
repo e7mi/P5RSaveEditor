@@ -1,3 +1,4 @@
+pub mod app;
 pub mod backups;
 pub mod calendar;
 pub mod gamedata;
@@ -7,3 +8,4 @@ pub mod paths;
 pub mod savefile;
 pub mod tables;
 pub mod ui;
+pub mod views;
