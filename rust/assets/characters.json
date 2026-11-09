@@ -1,0 +1,62 @@
+[
+ {
+  "key": "joker",
+  "name": "主人公",
+  "base": 44,
+  "joker": true
+ },
+ {
+  "key": "ryuji",
+  "name": "坂本竜司",
+  "base": 732,
+  "joker": false
+ },
+ {
+  "key": "mona",
+  "name": "モルガナ",
+  "base": 1420,
+  "joker": false
+ },
+ {
+  "key": "ann",
+  "name": "高巻杏",
+  "base": 2108,
+  "joker": false
+ },
+ {
+  "key": "yusuke",
+  "name": "喜多川祐介",
+  "base": 2796,
+  "joker": false
+ },
+ {
+  "key": "makoto",
+  "name": "新島真",
+  "base": 3484,
+  "joker": false
+ },
+ {
+  "key": "haru",
+  "name": "奥村春",
+  "base": 4172,
+  "joker": false
+ },
+ {
+  "key": "futaba",
+  "name": "佐倉双葉",
+  "base": 4860,
+  "joker": false
+ },
+ {
+  "key": "akechi",
+  "name": "明智吾郎",
+  "base": 5548,
+  "joker": false
+ },
+ {
+  "key": "violet",
+  "name": "芳澤すみれ",
+  "base": 6236,
+  "joker": false
+ }
+]

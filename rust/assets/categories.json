@@ -1,0 +1,74 @@
+[
+ {
+  "key": "melee",
+  "label": "近接武器",
+  "base": 6960,
+  "count": 296,
+  "kind": "owned",
+  "read_only": false
+ },
+ {
+  "key": "ranged",
+  "label": "銃",
+  "base": 13360,
+  "count": 256,
+  "kind": "owned",
+  "read_only": false
+ },
+ {
+  "key": "armor",
+  "label": "防具",
+  "base": 7984,
+  "count": 301,
+  "kind": "count",
+  "read_only": false
+ },
+ {
+  "key": "accessory",
+  "label": "アクセサリ",
+  "base": 9008,
+  "count": 512,
+  "kind": "count",
+  "read_only": false
+ },
+ {
+  "key": "consumable",
+  "label": "消耗品",
+  "base": 9520,
+  "count": 696,
+  "kind": "count",
+  "read_only": false
+ },
+ {
+  "key": "skillcard",
+  "label": "スキルカード",
+  "base": 11824,
+  "count": 401,
+  "kind": "count",
+  "read_only": false
+ },
+ {
+  "key": "material",
+  "label": "素材・宝物",
+  "base": 10800,
+  "count": 256,
+  "kind": "count",
+  "read_only": false
+ },
+ {
+  "key": "outfit",
+  "label": "衣装",
+  "base": 12848,
+  "count": 286,
+  "kind": "owned",
+  "read_only": false
+ },
+ {
+  "key": "keyitem",
+  "label": "キーアイテム",
+  "base": 10544,
+  "count": 256,
+  "kind": "readonly",
+  "read_only": true
+ }
+]
