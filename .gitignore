@@ -1,0 +1,9 @@
+/rust/target/
+/dist/
+*.zip
+*.exe
+*.pdb
+*.tmp
+*.log
+Thumbs.db
+.DS_Store
