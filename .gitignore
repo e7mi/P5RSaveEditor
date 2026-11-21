@@ -1,5 +1,5 @@
+/node_modules/
 /rust/target/
-/dist/
 *.zip
 *.exe
 *.pdb
