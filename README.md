@@ -1,10 +1,10 @@
 # P5RSaveEditor
 
-Persona 5 Royal (Steam / PC) のセーブデータを編集するブラウザアプリです。インストール不要、ローカルの DATA.DAT をブラウザ上で読み込み・編集して保存します。デスクトップ版 (Rust GUI) は別ブランチ `rust-gui` に残っています。
+Persona 5 Royal (Steam / PC) のセーブデータを編集するブラウザアプリです。インストール不要、ローカルの DATA.DAT をブラウザ上で読み込み・編集して保存します。
 
 ## 使い方
 
-1. `web/` をローカルで HTTP サーブする (例: `cd web; python -m http.server`) か、任意の静的ホスティングに置きます。`file://` でも開けますが、File System Access API を使いたいなら `http(s)://` が必須です。
+1. `web/index.html` をブラウザで開きます。`file://` のままダブルクリックでも動きます。
 2. 「ファイルを開く」から `DATA.DAT` を選びます。Chromium 系なら savedata フォルダをまとめて読むこともできます。
 3. 値を編集して「保存」を押します。
 
@@ -62,18 +62,20 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集するブラウザア
 ## テスト
 
 ```powershell
-node --test tests/
+node --test tests/*.test.mjs
 ```
 
 実セーブを使ったラウンドトリップ検証を含みます。既定では `H:/0001/games/persona/testsave/DATA05/DATA.DAT` を読み、`P5R_TEST_SAVE` で別ファイルに切り替えられます。
+`web/js/` を編集したら `node scripts/build-single-file.mjs` で `web/bundle.js` を再生成してください。
 
 ## 構成
 
 ```text
 P5RSaveEditor/
   README.md
-  web/     ブラウザで開くアプリ本体
-  tests/   Node.js のテスト
+  web/      ブラウザで開くアプリ本体 (bundle.js は scripts/ で生成)
+  tests/    Node.js のテスト
+  scripts/  bundle.js を再生成するビルドスクリプト
 ```
 
 ## 注意
