@@ -1,18 +1,16 @@
-# P5R Save Editor
+# P5RSaveEditor
 
-Persona 5 Royal (Steam / PC) のセーブデータを編集する Windows 用デスクトップツールです。
-配布物では実行ファイル `P5RSaveEditor.exe` の 1 つだけで動き、インストールも Python も不要です。このリポジトリはビルド用のソースだけを含み、実行ファイルと配布用 zip は含みません。
+Persona 5 Royal (Steam / PC) のセーブデータを編集するブラウザアプリです。インストール不要、ローカルの DATA.DAT をブラウザ上で読み込み・編集して保存します。デスクトップ版 (Rust GUI) は別ブランチ `rust-gui` に残っています。
 
 ## 使い方
 
-1. Persona 5 Royal を終了します。
-2. `P5RSaveEditor.exe` を起動します。
-3. セーブフォルダが自動で見つからない場合は「設定」から選択します。
-4. 値を編集して「保存」を押します。
+1. `web/index.html` をブラウザで開くか、GitHub Pages に公開してアクセスします。
+2. 「ファイルを開く」から `DATA.DAT` を選びます。Chromium 系なら savedata フォルダをまとめて読むこともできます。
+3. 値を編集して「保存」を押します。
+
+保存は File System Access API が使えるブラウザなら元のファイルに書き戻し、そうでなければ `DATA.DAT` としてダウンロードします。上書き前に「バックアップ」で元ファイルを退避してください。
 
 数値はすべてテキストボックスです。入力中は妥当な値だけが編集内容に反映され、ファイルへの書き込みは「保存」を押すまで行われません。
-バックアップが有効な場合、保存前の `DATA.DAT` は `%LOCALAPPDATA%\P5RSaveEditor\backups\` に自動で退避されます。
-復元するバックアップは読み込み確認を通ったものだけを使い、復元前のセーブも別途退避します。
 
 ## 対応セーブ
 
@@ -27,13 +25,11 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集する Windows 用デ
 - メンバー: 10 人の HP・SP・レベル・EXP とペルソナ
 - 所持品: 9 カテゴリの所持と個数
 - 図鑑: ペルソナ 232 件の登録
-- バックアップ: 作成・一覧・復元
-- 設定: セーブフォルダ・バックアップ・表示
+- バックアップ: 元ファイルをダウンロード退避
+- 設定: 予備スロット・高度なモード
 
 ## 主な機能
 
-- ウインドウの大きさに合わせて UI を拡大縮小
-- セーブスロットの自動検出とプレビュー (日付・プレイ時間・難易度・PLV)
 - 所持金 (0〜9,999,999)
 - ソーシャルステータス 5 項目
 - コープ 23 件 (ランク・ポイント)
@@ -41,9 +37,7 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集する Windows 用デ
 - ペルソナ (最大 12 スロット、レベル・EXP・特性・5 ステータス・8 スキル)
 - 所持品 9 カテゴリ
 - ペルソナ図鑑 232 件の登録
-- 保存前の自動バックアップ (設定で無効化可能)、手動バックアップ、復元
 - 検索・絞り込み、一括所持 / 一括最大 / 一括解除
-- ゲーム起動中の保存・復元を検出してブロック
 
 ## 高度なモード
 
@@ -52,11 +46,9 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集する Windows 用デ
 - 日付と時間帯の変更
 - ソーシャル、コープ、所持品、図鑑の一括操作
 - ペルソナスロットを空にする
-- ゲーム起動中の保存を許可する
 
 日付はヘッダーとセーブ本体の両方に書き込みます。日付のオフセットは実セーブ 16 本で確認していますが、変更後のデータをゲーム内でロードする確認は行っていません。
 クリアデータの日付は編集できません。
-高度なモードを無効にすると、ゲーム起動中の保存許可も無効になります。
 
 ## 所持品の扱い
 
@@ -67,38 +59,26 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集する Windows 用デ
 装備中の武器や防具をキャラクターごとに付け替える機能はありません。所持と個数の編集だけに対応しています。
 予備の項目は初期状態で非表示です。設定の「予備スロットを表示」で表示できます。
 
-## 自動ビルド
-
-GitHub Actions の `.github/workflows/ci.yml` が Windows 上で次を実行します。
-
-- `cargo fmt -- --check`
-- `cargo clippy --all-targets --locked -- -D warnings`
-- `cargo test --locked`
-- `cargo build --release --locked`
-
-成功すると `p5r-save-editor.exe` を workflow artifact として保存します。
-
-## ビルド
+## テスト
 
 ```powershell
-cd rust
-cargo build --release
+node --test tests/
 ```
 
-生成物は `rust/target/release/p5r-save-editor.exe` です。
-配布する場合は `dist/` に実行ファイルとドキュメントをまとめ、zip にします。このリポジトリには実行ファイルと zip を含めません。
+実セーブを使ったラウンドトリップ検証を含みます。既定では `H:/0001/games/persona/testsave/DATA05/DATA.DAT` を読み、`P5R_TEST_SAVE` で別ファイルに切り替えられます。
 
 ## 構成
 
 ```text
 P5RSaveEditor/
   README.md
-  rust/    ソース (Rust + Rune)
+  web/     ブラウザで開くアプリ本体
+  tests/   Node.js のテスト
 ```
 
 ## 注意
 
-- ゲームを起動したまま保存・復元しないでください。Steam Cloud との競合やセーブ破損の原因になります。
+- ゲームを起動したままセーブを上書きしないでください。Steam Cloud との競合やセーブ破損の原因になります。
 - コープのランクを下げても、通過済みのストーリーイベントは再生されません。
 - ストーリー固定のコープは、ランクを変更してもゲーム内で反映されない場合があります。
 - 図鑑の全登録は登録ビットマスクのみを変更します。
@@ -118,7 +98,5 @@ P5RSaveEditor/
 - コンテナ形式 (AES-256-CBC / zlib / CRC-32) の解析: [zarroboogs/fiber-saveutil](https://github.com/zarroboogs/fiber-saveutil)
 - ペルソナ・アイテム名表、オフセット情報の参考: [j0nnyDiGITAL/change-of-heart](https://github.com/j0nnyDiGITAL/change-of-heart) (MIT)
 - アイテム名表の参考: [Ruimusume/P5R](https://github.com/Ruimusume/P5R)
-- GUI: [anomalyco/rune](https://github.com/anomalyco/rune) (MIT)
-- フォント: M PLUS 1p (SIL Open Font License 1.1)
 - 本ツールは ATLUS / SEGA と無関係の非公式ツールです。
   Persona 5 Royal は ATLUS / SEGA の商標です。
