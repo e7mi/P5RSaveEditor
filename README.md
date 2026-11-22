@@ -4,7 +4,7 @@ Persona 5 Royal (Steam / PC) のセーブデータを編集するブラウザア
 
 ## 使い方
 
-1. `web/index.html` をブラウザで開きます。`file://` のままダブルクリックでも動きます。
+1. `web/index.html` をブラウザで開くか、GitHub Pages の `https://e7mi.github.io/P5RSaveEditor/` にアクセスします。`file://` のままダブルクリックでも動きます。
 2. 「ファイルを開く」から `DATA.DAT` を選びます。Chromium 系なら savedata フォルダをまとめて読むこともできます。
 3. 値を編集して「保存」を押します。
 
