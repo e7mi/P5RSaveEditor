@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -22,13 +22,8 @@ import { parsePlaytimeMinutes } from '../web/js/input.js';
 
 const REAL_SAVE = process.env.P5R_TEST_SAVE ?? 'H:/0001/games/persona/testsave/DATA05/DATA.DAT';
 
-test('real save reads and round trips', async () => {
-  let raw;
-  try {
-    raw = new Uint8Array(readFileSync(REAL_SAVE));
-  } catch {
-    return;
-  }
+test('real save reads and round trips', { skip: existsSync(REAL_SAVE) ? false : `real save not found: ${REAL_SAVE}` }, async () => {
+  const raw = new Uint8Array(readFileSync(REAL_SAVE));
   const document = await SaveDocument.load(raw);
   assert.equal(document.data.length, DATA_SIZE);
   assert.equal(document.container.file_crc_ok, true);

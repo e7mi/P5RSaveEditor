@@ -1,6 +1,7 @@
 // Browser UI for the P5R (Steam, payload 0x31) save editor.
 // Single-page app: one Editor state object, render() rebuilds the page DOM.
 
+import { toFullwidth } from './util.js';
 import { SaveContainer } from './savefile.js';
 import {
   SaveDocument,
@@ -329,7 +330,9 @@ function syncBasicDrafts() {
   b.playtime.v = formatPlaytimeInput(doc.header.playtimeMinutes());
   b.date.v = formatDateShort(doc.header.day);
   const payloadTime = doc.date()[1];
-  Editor.dateTime = isValidTime(payloadTime) ? payloadTime : isValidTime(doc.header.time) ? doc.header.time : 4;
+  // Keep the raw payload value when both reads are invalid so applyAll does
+  // not silently rewrite an unknown time on save.
+  Editor.dateTime = isValidTime(payloadTime) ? payloadTime : isValidTime(doc.header.time) ? doc.header.time : payloadTime;
   const stats = doc.socialStats();
   b.social = [];
   for (let i = 0; i < Math.max(5, stats.length); i++) b.social.push(Field('0'));
@@ -434,7 +437,7 @@ function validateAll() {
   const doc = Editor.doc;
   const b = Editor.drafts.basic;
   if (b.name.v.trim() === '') return '名前を入力してください。';
-  if (new TextEncoder().encode(b.name.v.trim()).length > NAME_LENGTH)
+  if (new TextEncoder().encode(toFullwidth(b.name.v.trim())).length > NAME_LENGTH)
     return `名前は ${NAME_LENGTH} バイト以内で入力してください。`;
   if (moneyValue() === null) return '所持金は 0〜9,999,999 の数値で入力してください。';
   if (playtimeValue() === null) return 'プレイ時間は「87:09」または分単位の数値で入力してください。';

@@ -364,7 +364,7 @@ function aes256Cbc(key, iv, data, decrypt = false) {
   let chain = iv.slice();
   if (!decrypt) {
     for (let offset = 0; offset < data.length; offset += 16) {
-      const block = data.subarray(offset, offset + 16);
+      const block = data.slice(offset, offset + 16);
       for (let i = 0; i < 16; i++) block[i] ^= chain[i];
       encryptBlock(roundKeys, block, out, offset);
       chain = out.subarray(offset, offset + 16);
@@ -749,19 +749,29 @@ function calcCrc(buffer) {
 async function zlibDecompress(data) {
   const stream = new DecompressionStream('deflate');
   const writer = stream.writable.getWriter();
-  writer.write(data);
-  writer.close();
+  // Awaiting write() before draining the readable side deadlocks on
+  // backpressure; run it concurrently and keep the rejection handled.
+  const pending = writer
+    .write(data)
+    .then(() => writer.close())
+    .catch(() => {});
   const response = new Response(stream.readable);
-  return new Uint8Array(await response.arrayBuffer());
+  const buffer = await response.arrayBuffer();
+  await pending;
+  return new Uint8Array(buffer);
 }
 
 async function zlibCompress(data) {
   const stream = new CompressionStream('deflate');
   const writer = stream.writable.getWriter();
-  writer.write(data);
-  writer.close();
+  const pending = writer
+    .write(data)
+    .then(() => writer.close())
+    .catch(() => {});
   const response = new Response(stream.readable);
-  return new Uint8Array(await response.arrayBuffer());
+  const buffer = await response.arrayBuffer();
+  await pending;
+  return new Uint8Array(buffer);
 }
 
 class SaveHeader {
@@ -960,7 +970,7 @@ class SaveContainer {
     this.stored_data_crc = readU32(body, 16);
 
     const headerEnd = (this.save_flags & 1) !== 0 ? this.header_size_comp : this.header_size;
-    if (headerEnd < 0x20 || headerEnd > body.length) {
+    if (headerEnd < 0x20 || headerEnd - 0x20 > body.length) {
       throw new SaveError('ヘッダー領域が不正です。');
     }
     // header_size(_comp) counts from the file start including the 0x20 body
@@ -974,7 +984,8 @@ class SaveContainer {
     }
 
     const dataOffset = align(headerEnd, 16) - 0x20;
-    if (dataOffset > body.length) {
+    const dataLen = (this.save_flags & 2) !== 0 ? this.data_size_comp : this.data_size;
+    if (dataOffset > body.length || dataOffset + dataLen > body.length) {
       throw new SaveError('データ領域が不正です。');
     }
     const dataRaw =
@@ -1047,9 +1058,6 @@ class SaveContainer {
     if (encrypt) {
       fileFlags |= 0x80000000;
       crypto.getRandomValues(iv);
-      if (body.length % 16 !== 0) {
-        throw new SaveError('本体長が 16 の倍数ではありません。');
-      }
       outerBody = aes256Cbc(CRYPT_KEY, iv, body, false);
     }
 
@@ -1718,6 +1726,7 @@ function skillLabel(id) {
 
 
 
+
 const APP_VERSION = '2.0.0';
 const canFs = 'showDirectoryPicker' in window;
 const canSavePicker = 'showSaveFilePicker' in window;
@@ -2008,7 +2017,9 @@ function syncBasicDrafts() {
   b.playtime.v = formatPlaytimeInput(doc.header.playtimeMinutes());
   b.date.v = formatDateShort(doc.header.day);
   const payloadTime = doc.date()[1];
-  Editor.dateTime = isValidTime(payloadTime) ? payloadTime : isValidTime(doc.header.time) ? doc.header.time : 4;
+  // Keep the raw payload value when both reads are invalid so applyAll does
+  // not silently rewrite an unknown time on save.
+  Editor.dateTime = isValidTime(payloadTime) ? payloadTime : isValidTime(doc.header.time) ? doc.header.time : payloadTime;
   const stats = doc.socialStats();
   b.social = [];
   for (let i = 0; i < Math.max(5, stats.length); i++) b.social.push(Field('0'));
@@ -2113,7 +2124,7 @@ function validateAll() {
   const doc = Editor.doc;
   const b = Editor.drafts.basic;
   if (b.name.v.trim() === '') return '名前を入力してください。';
-  if (new TextEncoder().encode(b.name.v.trim()).length > NAME_LENGTH)
+  if (new TextEncoder().encode(toFullwidth(b.name.v.trim())).length > NAME_LENGTH)
     return `名前は ${NAME_LENGTH} バイト以内で入力してください。`;
   if (moneyValue() === null) return '所持金は 0〜9,999,999 の数値で入力してください。';
   if (playtimeValue() === null) return 'プレイ時間は「87:09」または分単位の数値で入力してください。';

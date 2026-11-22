@@ -1,7 +1,7 @@
 // Smoke test for web/js/app.js: minimal DOM shim, load a real save, render
 // every page, and drive validate -> apply -> toBytes.
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -100,13 +100,8 @@ const { Editor } = await import('../web/js/app.js');
 
 const REAL_SAVE = process.env.P5R_TEST_SAVE ?? 'H:/0001/games/persona/testsave/DATA05/DATA.DAT';
 
-test('UI renders all pages with a real save', async () => {
-  let raw;
-  try {
-    raw = new Uint8Array(readFileSync(REAL_SAVE));
-  } catch {
-    return;
-  }
+test('UI renders all pages with a real save', { skip: existsSync(REAL_SAVE) ? false : `real save not found: ${REAL_SAVE}` }, async () => {
+  const raw = new Uint8Array(readFileSync(REAL_SAVE));
   await Editor.__test.load(raw, 'DATA05');
   assert.ok(Editor.doc);
   assert.equal(Editor.drafts.members.length, 10);
