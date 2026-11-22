@@ -39,19 +39,29 @@ export function calcCrc(buffer) {
 async function zlibDecompress(data) {
   const stream = new DecompressionStream('deflate');
   const writer = stream.writable.getWriter();
-  writer.write(data);
-  writer.close();
+  // Awaiting write() before draining the readable side deadlocks on
+  // backpressure; run it concurrently and keep the rejection handled.
+  const pending = writer
+    .write(data)
+    .then(() => writer.close())
+    .catch(() => {});
   const response = new Response(stream.readable);
-  return new Uint8Array(await response.arrayBuffer());
+  const buffer = await response.arrayBuffer();
+  await pending;
+  return new Uint8Array(buffer);
 }
 
 async function zlibCompress(data) {
   const stream = new CompressionStream('deflate');
   const writer = stream.writable.getWriter();
-  writer.write(data);
-  writer.close();
+  const pending = writer
+    .write(data)
+    .then(() => writer.close())
+    .catch(() => {});
   const response = new Response(stream.readable);
-  return new Uint8Array(await response.arrayBuffer());
+  const buffer = await response.arrayBuffer();
+  await pending;
+  return new Uint8Array(buffer);
 }
 
 export class SaveHeader {
@@ -250,7 +260,7 @@ export class SaveContainer {
     this.stored_data_crc = readU32(body, 16);
 
     const headerEnd = (this.save_flags & 1) !== 0 ? this.header_size_comp : this.header_size;
-    if (headerEnd < 0x20 || headerEnd > body.length) {
+    if (headerEnd < 0x20 || headerEnd - 0x20 > body.length) {
       throw new SaveError('ヘッダー領域が不正です。');
     }
     // header_size(_comp) counts from the file start including the 0x20 body
@@ -264,7 +274,8 @@ export class SaveContainer {
     }
 
     const dataOffset = align(headerEnd, 16) - 0x20;
-    if (dataOffset > body.length) {
+    const dataLen = (this.save_flags & 2) !== 0 ? this.data_size_comp : this.data_size;
+    if (dataOffset > body.length || dataOffset + dataLen > body.length) {
       throw new SaveError('データ領域が不正です。');
     }
     const dataRaw =
@@ -337,9 +348,6 @@ export class SaveContainer {
     if (encrypt) {
       fileFlags |= 0x80000000;
       crypto.getRandomValues(iv);
-      if (body.length % 16 !== 0) {
-        throw new SaveError('本体長が 16 の倍数ではありません。');
-      }
       outerBody = aes256Cbc(CRYPT_KEY, iv, body, false);
     }
 

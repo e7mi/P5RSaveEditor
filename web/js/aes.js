@@ -149,7 +149,7 @@ export function aes256Cbc(key, iv, data, decrypt = false) {
   let chain = iv.slice();
   if (!decrypt) {
     for (let offset = 0; offset < data.length; offset += 16) {
-      const block = data.subarray(offset, offset + 16);
+      const block = data.slice(offset, offset + 16);
       for (let i = 0; i < 16; i++) block[i] ^= chain[i];
       encryptBlock(roundKeys, block, out, offset);
       chain = out.subarray(offset, offset + 16);

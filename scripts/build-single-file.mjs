@@ -24,7 +24,7 @@ for (const name of ORDER) {
   let src = readFileSync(join(root, 'web', name), 'utf8');
   src = src
     .replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"]\s*;/g, '')
-    .replace(/^export\s*\{[^}]*\}\s*;?/m, '')
+    .replace(/^export\s*\{[^}]*\}\s*;?/gm, '')
     .replace(/^export\s+(?=(const|let|var|function|class|async|default))/gm, '');
   out += `\n// ---- ${name} ----\n` + src;
 }
