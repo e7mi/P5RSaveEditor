@@ -92,13 +92,27 @@ globalThis.document = {
 globalThis.queueMicrotask = globalThis.queueMicrotask ?? ((f) => Promise.resolve().then(f));
 window.addEventListener = () => {};
 window.showDirectoryPicker = undefined; // feature-detect off for the test
-window.showSaveFilePicker = undefined;
 delete window.showDirectoryPicker;
-delete window.showSaveFilePicker;
+// Picker exists but the user cancels it, exercising the download fallback.
+window.showSaveFilePicker = async () => {
+  throw new DOMException('cancelled', 'AbortError');
+};
+URL.createObjectURL = URL.createObjectURL ?? (() => 'blob:mock');
+URL.revokeObjectURL = URL.revokeObjectURL ?? (() => {});
 
 const { Editor } = await import('../web/js/app.js');
 
 const REAL_SAVE = process.env.P5R_TEST_SAVE ?? 'H:/0001/games/persona/testsave/DATA05/DATA.DAT';
+
+function findButton(text) {
+  let hit = null;
+  const walk = (el) => {
+    if (el.tagName === 'BUTTON' && el.textContent === text) hit = el;
+    for (const c of el.children) walk(c);
+  };
+  walk(appEl);
+  return hit;
+}
 
 test('UI renders all pages with a real save', { skip: existsSync(REAL_SAVE) ? false : `real save not found: ${REAL_SAVE}` }, async () => {
   const raw = new Uint8Array(readFileSync(REAL_SAVE));
@@ -126,4 +140,21 @@ test('UI renders all pages with a real save', { skip: existsSync(REAL_SAVE) ? fa
   assert.equal(Editor.__test.validateAll(), '所持金は 0〜9,999,999 の数値で入力してください。');
   assert.equal(Editor.doc.money(), before);
   Editor.drafts.basic.money.v = String(before);
+});
+
+test('save without a file handle offers download on confirm cancel', { skip: existsSync(REAL_SAVE) ? false : `real save not found: ${REAL_SAVE}` }, async () => {
+  const raw = new Uint8Array(readFileSync(REAL_SAVE));
+  await Editor.__test.load(raw, 'DATA05');
+  Editor.doc.setMoney(123);
+  assert.ok(Editor.doc.dirty);
+  Editor.__test.render();
+
+  findButton('保存').click();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(Editor.modal?.kind, 'confirm');
+
+  findButton('キャンセル').click();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(Editor.modal, null);
+  assert.match(Editor.status, /ダウンロードしました/);
 });

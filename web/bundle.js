@@ -2205,9 +2205,9 @@ function applyAll() {
 
 // ---------- confirm / message plumbing ----------
 
-function requestConfirm(title, message, action) {
+function requestConfirm(title, message, action, cancelAction) {
   Editor.pending = action;
-  Editor.modal = { kind: 'confirm', title, message };
+  Editor.modal = { kind: 'confirm', title, message, cancelAction };
   render();
 }
 
@@ -2304,6 +2304,11 @@ async function saveDocument() {
       // fall through to the picker / download path
     }
   }
+  const fallbackDownload = () => {
+    download(packed, 'DATA.DAT');
+    setStatus('info', 'DATA.DAT をダウンロードしました。savedata フォルダに上書きしてください。');
+    render();
+  };
   if (canSavePicker) {
     requestConfirm(
       '書き込み先を選択',
@@ -2318,16 +2323,13 @@ async function saveDocument() {
           finish();
         } catch (e) {
           if (e && e.name === 'AbortError') return;
-          download(packed, 'DATA.DAT');
-          setStatus('info', 'DATA.DAT をダウンロードしました。savedata フォルダに上書きしてください。');
-          render();
+          fallbackDownload();
         }
-      }
+      },
+      fallbackDownload
     );
   } else {
-    download(packed, 'DATA.DAT');
-    setStatus('info', 'DATA.DAT をダウンロードしました。savedata フォルダに上書きしてください。');
-    render();
+    fallbackDownload();
   }
 }
 
@@ -3151,8 +3153,9 @@ function confirmModal(m) {
     h('div', { text: m.message }));
   card.append(h('div', { cls: 'foot' },
     btn('キャンセル', () => {
-      Editor.pending = null;
+      const cancel = m.cancelAction;
       closeModal();
+      if (cancel) cancel();
     }),
     btn('実行', () => {
       const action = Editor.pending;
